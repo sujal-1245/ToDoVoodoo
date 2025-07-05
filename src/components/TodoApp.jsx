@@ -62,13 +62,13 @@ const TodoApp = () => {
         className="max-w-2xl mx-auto backdrop-blur-lg bg-white/60 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl shadow-[0_0_50px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_0_50px_-10px_rgba(255,255,255,0.1)] p-6 sm:p-8"
       >
         {/* Header */}
-        <div className="flex justify-center md:justify-between items-center mb-10 px-4 md:px-8">
+        <div className="flex justify-between items-center mb-10">
           <motion.h1
             layout
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white drop-shadow-lg text-center md:text-left"
+            className="hidden md:block text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white drop-shadow-lg"
           >
             TodoVoodoo🧿
           </motion.h1>
