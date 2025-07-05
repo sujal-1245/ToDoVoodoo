@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <a href="[https://todo-voodoo.vercel.app](https://to-do-voodoo.vercel.app/)" target="_blank">
+  <a href="https://to-do-voodoo.vercel.app/" target="_blank">
     <img src="https://img.shields.io/badge/Live-Demo-00b894?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
   </a>
   <a href="https://github.com/sujal-1245/ToDoVoodoo" target="_blank">
