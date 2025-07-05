@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font smoothing and system font stack */
+body {
+  @apply antialiased font-sans;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Smooth transitions for light/dark mode */
+html {
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.4);
+  border-radius: 10px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Selection styling with new palette */
+::selection {
+  background-color: theme('colors.lapis_lazuli.500');
+  color: white;
+}
+
+.dark ::selection {
+  background-color: theme('colors.verdigris.600');
+  color: white;
+}
