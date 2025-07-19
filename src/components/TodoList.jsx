@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FiEdit2, FiTrash2, FiCheck, FiMove } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const SortableItem = ({ todo, children, dragOverlay = false }) => {
+const SortableItem = ({ todo, children }) => {
   const {
     setNodeRef,
     attributes,
@@ -24,7 +24,7 @@ const SortableItem = ({ todo, children, dragOverlay = false }) => {
     transition,
     isDragging,
     isOver,
-  } = useSortable({ id: todo.id });
+  } = useSortable({ id: todo._id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -49,27 +49,11 @@ const SortableItem = ({ todo, children, dragOverlay = false }) => {
   );
 };
 
-const TodoList = ({ todos, setTodos }) => {
+const TodoList = ({ todos, onToggle, onDelete }) => {
   const [editingId, setEditingId] = useState(null);
   const [editedText, setEditedText] = useState("");
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("todo-voodoo-tasks");
-    if (stored) setTodos(JSON.parse(stored));
-  }, []);
-
-  // Save to localStorage whenever todos change
-  useEffect(() => {
-    localStorage.setItem("todo-voodoo-tasks", JSON.stringify(todos));
-  }, [todos]);
-
   const sensors = useSensors(useSensor(PointerSensor));
-
-  const toggleComplete = (id) =>
-    setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
 
   const handleEdit = (id, currentText) => {
     setEditingId(id);
@@ -79,10 +63,9 @@ const TodoList = ({ todos, setTodos }) => {
   const handleEditSubmit = (id) => {
     const trimmed = editedText.trim();
     if (!trimmed) return;
-    setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, text: trimmed } : t))
-    );
-    resetEdit();
+
+    setEditingId(null);
+    setEditedText("");
   };
 
   const resetEdit = () => {
@@ -90,19 +73,8 @@ const TodoList = ({ todos, setTodos }) => {
     setEditedText("");
   };
 
-  const handleDelete = (id) =>
-    setTodos((prev) => prev.filter((t) => t.id !== id));
-
   const handleDragEnd = ({ active, over }) => {
-    if (!over || active.id === over.id) return;
-    const oldIndex = todos.findIndex((t) => t.id === active.id);
-    const newIndex = todos.findIndex((t) => t.id === over.id);
-    setTodos((prev) => {
-      const reordered = [...prev];
-      const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
-      return reordered;
-    });
+
   };
 
   if (todos.length === 0) {
@@ -119,11 +91,11 @@ const TodoList = ({ todos, setTodos }) => {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={todos.map((t) => t._id)} strategy={verticalListSortingStrategy}>
         <ul className="mt-6 space-y-4">
           <AnimatePresence initial={false}>
             {todos.map((todo) => (
-              <SortableItem key={todo.id} todo={todo}>
+              <SortableItem key={todo._id} todo={todo}>
                 {({ listeners, attributes }) => (
                   <motion.div
                     layout
@@ -138,19 +110,19 @@ const TodoList = ({ todos, setTodos }) => {
                       <motion.input
                         type="checkbox"
                         checked={todo.completed}
-                        onChange={() => toggleComplete(todo.id)}
+                        onChange={() => onToggle(todo._id, !todo.completed)}
                         className="h-5 w-5 accent-amethyst cursor-pointer"
                         whileTap={{ scale: 0.9 }}
                       />
 
-                      {editingId === todo.id ? (
+                      {editingId === todo._id ? (
                         <motion.input
                           type="text"
                           className="flex-1 bg-transparent border-b border-amethyst focus:outline-none text-base text-gray-800 dark:text-white placeholder:text-gray-400"
                           value={editedText}
                           onChange={(e) => setEditedText(e.target.value)}
-                          onBlur={() => handleEditSubmit(todo.id)}
-                          onKeyDown={(e) => e.key === "Enter" && handleEditSubmit(todo.id)}
+                          onBlur={() => handleEditSubmit(todo._id)}
+                          onKeyDown={(e) => e.key === "Enter" && handleEditSubmit(todo._id)}
                           autoFocus
                           layout
                         />
@@ -163,13 +135,12 @@ const TodoList = ({ todos, setTodos }) => {
                               : "text-orange_peel-500 dark:text-orange_peel-600"
                           }`}
                         >
-                          {todo.text}
+                          {todo.task}
                         </motion.span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Drag Handle */}
                       <motion.button
                         {...listeners}
                         {...attributes}
@@ -180,9 +151,9 @@ const TodoList = ({ todos, setTodos }) => {
                         <FiMove size={18} />
                       </motion.button>
 
-                      {editingId === todo.id ? (
+                      {editingId === todo._id ? (
                         <motion.button
-                          onClick={() => handleEditSubmit(todo.id)}
+                          onClick={() => handleEditSubmit(todo._id)}
                           className="text-green-500 hover:text-green-400 transition"
                           whileTap={{ scale: 0.9 }}
                           title="Save"
@@ -191,7 +162,7 @@ const TodoList = ({ todos, setTodos }) => {
                         </motion.button>
                       ) : (
                         <motion.button
-                          onClick={() => handleEdit(todo.id, todo.text)}
+                          onClick={() => handleEdit(todo._id, todo.task)}
                           className="text-yellow-400 hover:text-yellow-300 transition"
                           whileTap={{ scale: 0.9 }}
                           title="Edit"
@@ -201,7 +172,7 @@ const TodoList = ({ todos, setTodos }) => {
                       )}
 
                       <motion.button
-                        onClick={() => handleDelete(todo.id)}
+                        onClick={() => onDelete(todo._id)}
                         className="text-red-400 hover:text-red-300 transition"
                         whileTap={{ scale: 0.9 }}
                         title="Delete"

@@ -2,24 +2,21 @@ import React, { useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 
-const TaskForm = ({ setTodos }) => {
+const TaskForm = ({ onAdd }) => {
   const [text, setText] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    setTodos((prev) => [
-      {
-        id: crypto.randomUUID(),
-        text: trimmed,
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-    setText("");
+    try {
+      await onAdd(trimmed); // Call parent function
+      setText("");           // Clear input field
+    } catch (error) {
+      console.error("Failed to add task:", error);
+      alert("Something went wrong while adding task.");
+    }
   };
 
   return (

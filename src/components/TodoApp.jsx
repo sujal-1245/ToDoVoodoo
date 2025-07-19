@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
 import TaskForm from "./TaskForm";
 import TodoList from "./TodoList";
 import { FiSun, FiMoon } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import {
+  getTasks,
+  addTask,
+  deleteTask,
+  updateTask,
+} from "../api/tasks";
 
 const FILTERS = {
   ALL: "All",
@@ -10,38 +16,64 @@ const FILTERS = {
   PENDING: "Pending",
 };
 
-const TODO_STORAGE_KEY = "todo-voodoo-tasks";
 const THEME_STORAGE_KEY = "theme";
 
 const TodoApp = () => {
-  const [todos, setTodos] = useState(() => {
-    try {
-      const stored = localStorage.getItem(TODO_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
+  const [todos, setTodos] = useState([]);
   const [filter, setFilter] = useState(FILTERS.ALL);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem(THEME_STORAGE_KEY) === "dark"
   );
 
-  // Save todos to localStorage whenever they change
+  // Fetch from backend on load
   useEffect(() => {
-    localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
-  }, [todos]);
+    const fetchData = async () => {
+      try {
+        const data = await getTasks();
+        setTodos(data);
+      } catch (error) {
+        console.error("Failed to load tasks:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
-  // Toggle theme and store in localStorage
+  // Theme toggle
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
     localStorage.setItem(THEME_STORAGE_KEY, darkMode ? "dark" : "light");
   }, [darkMode]);
 
+  const handleAdd = async (text) => {
+    try {
+      const newTodo = await addTask({ task: text, status: false });
+      setTodos((prev) => [...prev, newTodo]);
+    } catch (error) {
+      console.error("Add failed:", error);
+    }
+  };
+
+  const handleToggle = async (id, status) => {
+    try {
+      const updated = await updateTask(id, { status });
+      setTodos((prev) => prev.map((todo) => (todo._id === id ? updated : todo)));
+    } catch (error) {
+      console.error("Toggle failed:", error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteTask(id);
+      setTodos((prev) => prev.filter((todo) => todo._id !== id));
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
   const filteredTodos = todos.filter((todo) => {
-    if (filter === FILTERS.COMPLETED) return todo.completed;
-    if (filter === FILTERS.PENDING) return !todo.completed;
+    if (filter === FILTERS.COMPLETED) return todo.status;
+    if (filter === FILTERS.PENDING) return !todo.status;
     return true;
   });
 
@@ -72,10 +104,18 @@ const TodoApp = () => {
           >
             TodoVoodoo🧿
           </motion.h1>
+
+          <button
+            onClick={() => setDarkMode((prev) => !prev)}
+            className="ml-4 p-2 rounded-full bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 transition"
+            aria-label="Toggle theme"
+          >
+            {darkMode ? <FiSun className="text-yellow-300" /> : <FiMoon />}
+          </button>
         </div>
 
         {/* Task Input */}
-        <TaskForm setTodos={setTodos} />
+        <TaskForm onAdd={handleAdd} />
 
         {/* Filter Tabs */}
         <motion.div
@@ -102,7 +142,11 @@ const TodoApp = () => {
         </motion.div>
 
         {/* Task List */}
-        <TodoList todos={filteredTodos} setTodos={setTodos} />
+        <TodoList
+          todos={filteredTodos}
+          onToggle={(id, currentStatus) => handleToggle(id, !currentStatus)}
+          onDelete={handleDelete}
+        />
       </motion.div>
     </div>
   );
